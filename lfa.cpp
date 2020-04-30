@@ -184,7 +184,7 @@ unsigned long long getSingleStateHash( int state ){
 
 struct StateNumberAllocator{
 private:
-    int currentIndex = 0;
+    int currentIndex;
 public:
     //int states[1024];
     std::map< unsigned long long, int > m;
@@ -210,24 +210,29 @@ public:
             //cout << "Already there" << endl;
             return m[hash];
         } else {
-            //cout << "Allocated!!!!!!!!!!!!!!!!!!!!!!" << endl;
             m[hash] = currentIndex;
             currentIndex++;
+            //cout << "Allocated!!!!!!!!!!!!!!!!!!!!!! for " << hash << "  " << m[hash] << endl;
             return m[hash];
         }
     }
 
-    int getStatesCombinationNewId( std::vector<int> currentStates ){
-        unsigned long long hash = getStatesHash(currentStates);
-        return allocateHash(hash);
+};
+
+struct Link{
+    int from;
+    int to;
+    char by;
+    Link( int _from, int _to, char _by ){
+        from = _from;
+        to = _to;
+        by = _by;
     }
 };
 
 Automat NFAtoDFA( Automat & automat ){
 
-    Automat newAuto(automat.node_number);
-    //newAuto.initialState = automat.initialState;
-    //newAuto.nodes[i].finalState = automat.nodes[i].finalState;
+    //Automat newAuto(automat.node_number);
 
     StateNumberAllocator allocator;
 
@@ -254,6 +259,11 @@ Automat NFAtoDFA( Automat & automat ){
     std::vector<unsigned long long> q;
     q.push_back(getSingleStateHash(automat.initialState));
 
+    StateNumberAllocator cleanAlloc;
+    int maxStates = 0;
+
+    std::vector<Link> links;
+
     while (!q.empty())
     {
         unsigned long long currentHash = q.back();
@@ -272,14 +282,30 @@ Automat NFAtoDFA( Automat & automat ){
                 }
             }
 
-            if ( !allocator.isHashTaken(composed) && composed != 0 ){
+            if ( composed != 0 && !allocator.isHashTaken(composed) ){
                 q.push_back(composed);
-                allocator.allocateHash(composed);
+                int allocatedNumber = allocator.allocateHash(composed);
+
+                /*
+                if ( allocator.isHashTaken(composed)){
+                    cout << "DEbug" << allocator.allocateHash(composed) << endl;
+                }
+                */
                 //cout << "Pushed back " << composed << endl;
 
+                //cout << "R::Current hash " << currentHash << " jumps -> " << composed << " by letter " << currentChar << endl;
 
-                cout << "Current hash " << currentHash << " jumps -> " << composed << " by letter " << currentChar << endl;
-                //cout << "Current hash " << allocator.allocateHash(currentHash) << " jumps -> " << allocator.allocateHash(composed) << " by letter " << currentChar << endl;
+                int fromNode = cleanAlloc.allocateHash(currentHash);
+                int toNode = cleanAlloc.allocateHash(composed);
+
+                if ( fromNode > maxStates )
+                    maxStates = fromNode;
+                if ( toNode > maxStates )
+                    maxStates = toNode;
+                //cout << "T::Current hash " << fromNode << " jumps -> " << toNode << " by letter " << currentChar << endl;
+
+                Link newLink(fromNode,toNode,currentChar);
+                links.push_back(newLink);
             }
         }
 
@@ -295,6 +321,17 @@ Automat NFAtoDFA( Automat & automat ){
         }*/
     }
 
+    Automat newAuto(maxStates);
+
+    newAuto.initialState = automat.initialState;
+    //newAuto.nodes[i].finalState = automat.nodes[i].finalState;
+
+    cout << "Constructing new automat with " << maxStates << " states" << endl;
+
+    for (std::vector<Link>::iterator it = links.begin() ; it != links.end(); ++it){
+        newAuto.nodes[it->from].m[it->by].push_back(it->to);
+        cout << it->from << " -> " << it->to << " by " << it->by << endl;
+    }
 
     return newAuto;
 }
