@@ -276,10 +276,11 @@ Automat NFAtoDFA( Automat & automat ){
                 q.push_back(composed);
                 allocator.allocateHash(composed);
                 //cout << "Pushed back " << composed << endl;
-            }
 
-            cout << "Current hash " << currentHash << " jumps -> " << composed << " by letter " << currentChar << endl;
-            //cout << "Current hash " << allocator.allocateHash(currentHash) << " jumps -> " << allocator.allocateHash(composed) << " by letter " << currentChar << endl;
+
+                cout << "Current hash " << currentHash << " jumps -> " << composed << " by letter " << currentChar << endl;
+                //cout << "Current hash " << allocator.allocateHash(currentHash) << " jumps -> " << allocator.allocateHash(composed) << " by letter " << currentChar << endl;
+            }
         }
 
         /*
