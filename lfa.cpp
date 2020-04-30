@@ -223,12 +223,29 @@ struct Link{
     int from;
     int to;
     char by;
-    Link( int _from, int _to, char _by ){
+    bool isFinal;
+    Link( int _from, int _to, char _by, bool _isFinal){
         from = _from;
         to = _to;
         by = _by;
+        isFinal = _isFinal;
     }
 };
+
+bool checkIfHashContainsFinalState( Automat & automat, unsigned long long hash ) {
+    unsigned long long mask;
+    for ( int i = 0; i < 32; i++ ){
+        mask = 1 << i;
+
+        if ( mask & hash ){
+            if ( automat.nodes[i].finalState ){
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 
 Automat NFAtoDFA( Automat & automat ){
 
@@ -274,7 +291,7 @@ Automat NFAtoDFA( Automat & automat ){
 
             unsigned long long mask;
             unsigned long long composed = 0;
-            for ( int i = 0; i < sizeof(unsigned long long); i++ ){
+            for ( int i = 0; i < 32; i++ ){
                 mask = 1 << i;
 
                 if ( mask & currentHash ){
@@ -292,8 +309,9 @@ Automat NFAtoDFA( Automat & automat ){
                 }
                 */
                 //cout << "Pushed back " << composed << endl;
-
-                //cout << "R::Current hash " << currentHash << " jumps -> " << composed << " by letter " << currentChar << endl;
+                
+                bool isFinalState = checkIfHashContainsFinalState(automat, composed);
+                cout << "R::Current hash " << currentHash << " jumps -> " << composed << " by letter " << currentChar << " (isfinal? " << isFinalState << ")" << endl;
 
                 int fromNode = cleanAlloc.allocateHash(currentHash);
                 int toNode = cleanAlloc.allocateHash(composed);
@@ -304,7 +322,7 @@ Automat NFAtoDFA( Automat & automat ){
                     maxStates = toNode;
                 //cout << "T::Current hash " << fromNode << " jumps -> " << toNode << " by letter " << currentChar << endl;
 
-                Link newLink(fromNode,toNode,currentChar);
+                Link newLink(fromNode, toNode, currentChar, isFinalState);
                 links.push_back(newLink);
             }
         }
@@ -331,6 +349,9 @@ Automat NFAtoDFA( Automat & automat ){
     for (std::vector<Link>::iterator it = links.begin() ; it != links.end(); ++it){
         newAuto.nodes[it->from].m[it->by].push_back(it->to);
         cout << it->from << " -> " << it->to << " by " << it->by << endl;
+
+        //cout << it->to << " is a final state ? " << it->isFinal << endl;
+        newAuto.nodes[it->to].finalState = it->isFinal;
     }
 
     return newAuto;
