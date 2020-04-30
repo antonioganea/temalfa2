@@ -311,7 +311,7 @@ Automat NFAtoDFA( Automat & automat ){
                 //cout << "Pushed back " << composed << endl;
                 
                 bool isFinalState = checkIfHashContainsFinalState(automat, composed);
-                cout << "R::Current hash " << currentHash << " jumps -> " << composed << " by letter " << currentChar << " (isfinal? " << isFinalState << ")" << endl;
+                //cout << "R::Current hash " << currentHash << " jumps -> " << composed << " by letter " << currentChar << " (isfinal? " << isFinalState << ")" << endl;
 
                 int fromNode = cleanAlloc.allocateHash(currentHash);
                 int toNode = cleanAlloc.allocateHash(composed);
@@ -344,11 +344,11 @@ Automat NFAtoDFA( Automat & automat ){
     newAuto.initialState = automat.initialState;
     //newAuto.nodes[i].finalState = automat.nodes[i].finalState;
 
-    cout << "Constructing new automat with " << maxStates << " states" << endl;
+    //cout << "Constructing new automat with " << maxStates << " states" << endl;
 
     for (std::vector<Link>::iterator it = links.begin() ; it != links.end(); ++it){
         newAuto.nodes[it->from].m[it->by].push_back(it->to);
-        cout << it->from << " -> " << it->to << " by " << it->by << endl;
+        //cout << it->from << " -> " << it->to << " by " << it->by << endl;
 
         //cout << it->to << " is a final state ? " << it->isFinal << endl;
         newAuto.nodes[it->to].finalState = it->isFinal;
