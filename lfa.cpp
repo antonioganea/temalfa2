@@ -326,17 +326,6 @@ Automat NFAtoDFA( Automat & automat ){
                 links.push_back(newLink);
             }
         }
-
-        /*
-        for( std::vector<int>::iterator it2 = automat.nodes[currentState].m[currentChar].begin(); it2 != automat.nodes[currentState].m[currentChar].end(); ++it2 ){
-            // from currentState -> jumpingInto by letter 'currentChar'
-
-            int jumpingInto = *it2;
-            if ( !vectorContains(currentStates, jumpingInto) ){
-                currentStates.push_back(jumpingInto);
-                q.push_back(jumpingInto);
-            }
-        }*/
     }
 
     Automat newAuto(maxStates);
