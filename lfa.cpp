@@ -30,7 +30,7 @@ struct Automat{
 
         characters = new char[256];
     }
-    
+
     /*
     ~Automat() {
         //delete nodes;
@@ -70,7 +70,7 @@ void passLetter( Automat & automat, std::vector<int> & currentStates, char curre
 
     for (std::vector<int>::iterator it = currentStates.begin() ; it != currentStates.end(); ++it){ // for all of the current states
         int currentState = *it;
-    
+
         for( std::vector<int>::iterator it2 = automat.nodes[currentState].m[currentChar].begin(); it2 != automat.nodes[currentState].m[currentChar].end(); ++it2 ){
             // from currentState -> jumpingInto by letter 'currentChar'
 
@@ -147,11 +147,11 @@ Automat LambdaNFAtoNFA( Automat & automat ){
             for (std::vector<int>::iterator it = currentStates.begin() ; it != currentStates.end(); ++it){
                 // din i in *it prin currentChar
                 newAuto.nodes[i].m[currentChar].push_back(*it);
-                //printf("%d->%d by %c\n",i,*it,currentChar);
+                printf("%d->%d by %c\n",i,*it,currentChar);
             }
         }
 
-        //cout << automat.nodes[i].finalState << " " << endl;
+        cout << i << " is final state ? " << automat.nodes[i].finalState << endl;
     }
 
 
@@ -182,6 +182,19 @@ unsigned long long getSingleStateHash( int state ){
     return hash;
 }
 
+void printBits( unsigned long long val ){
+    for ( int i = 31; i >= 0; i-- ){
+        unsigned long long mask = 1 << i;
+
+        if ( mask & val ){
+            cout << "1";
+        } else {
+            cout << "0";
+        }
+    }
+}
+
+
 struct StateNumberAllocator{
 private:
     int currentIndex;
@@ -202,7 +215,7 @@ public:
             //cout << "Nope" << endl;
             return false;
         }
-            
+
     }
 
     int allocateHash(unsigned long long hash) {
@@ -212,7 +225,7 @@ public:
         } else {
             m[hash] = currentIndex;
             currentIndex++;
-            //cout << "Allocated!!!!!!!!!!!!!!!!!!!!!! for " << hash << "  " << m[hash] << endl;
+            //cout << "Allocated!!!!!!!!!!!!!!!!!!!!!! for "; printBits(hash); cout << "  " << m[hash] << endl;
             return m[hash];
         }
     }
@@ -251,6 +264,8 @@ Automat NFAtoDFA( Automat & automat ){
 
     //Automat newAuto(automat.node_number);
 
+    cout << endl << endl;
+
     StateNumberAllocator allocator;
 
     unsigned long long matrix [automat.node_number][strlen(letters)]; // states x letters matrix of hashes
@@ -268,12 +283,19 @@ Automat NFAtoDFA( Automat & automat ){
             //cout << endl;
 
             matrix[i][C] = getStatesHash(currentStates);
+            cout << i << " " << letters[C] << " " ;
+            printBits(matrix[i][C]);
+            cout << endl;
+            //<< matrix[i][C] << endl;
         }
 
         //cout << automat.nodes[i].finalState << " " << endl;
     }
 
+    cout << endl;
+
     std::vector<unsigned long long> q;
+    cout << automat.initialState << endl;
     q.push_back(getSingleStateHash(automat.initialState));
 
     StateNumberAllocator cleanAlloc;
@@ -291,13 +313,18 @@ Automat NFAtoDFA( Automat & automat ){
 
             unsigned long long mask;
             unsigned long long composed = 0;
+
+            cout << "Current hash "; printBits(currentHash); cout << " composes into :" << endl;
             for ( int i = 0; i < 32; i++ ){
                 mask = 1 << i;
 
                 if ( mask & currentHash ){
+                    cout << "added " << i << " " << letters[C] << " "; printBits(matrix[i][C]); cout << endl;
                     composed |= matrix[i][C];
                 }
             }
+
+            cout << "composed : "; printBits(composed); cout << endl << endl;
 
             if ( composed != 0 && !allocator.isHashTaken(composed) ){
                 q.push_back(composed);
@@ -309,7 +336,7 @@ Automat NFAtoDFA( Automat & automat ){
                 }
                 */
                 //cout << "Pushed back " << composed << endl;
-                
+
                 bool isFinalState = checkIfHashContainsFinalState(automat, composed);
                 //cout << "R::Current hash " << currentHash << " jumps -> " << composed << " by letter " << currentChar << " (isfinal? " << isFinalState << ")" << endl;
 
@@ -323,6 +350,7 @@ Automat NFAtoDFA( Automat & automat ){
                 //cout << "T::Current hash " << fromNode << " jumps -> " << toNode << " by letter " << currentChar << endl;
 
                 Link newLink(fromNode, toNode, currentChar, isFinalState);
+                                                    //cout << "Pushed link " << fromNode << " " << toNode << " by " << currentChar << endl;
                 links.push_back(newLink);
             }
         }
@@ -333,13 +361,13 @@ Automat NFAtoDFA( Automat & automat ){
     newAuto.initialState = automat.initialState;
     //newAuto.nodes[i].finalState = automat.nodes[i].finalState;
 
-    //cout << "Constructing new automat with " << maxStates << " states" << endl;
+    cout << "Constructing new automata with " << maxStates << " states" << endl;
 
     for (std::vector<Link>::iterator it = links.begin() ; it != links.end(); ++it){
         newAuto.nodes[it->from].m[it->by].push_back(it->to);
-        //cout << it->from << " -> " << it->to << " by " << it->by << endl;
+        cout << it->from << " -> " << it->to << " by " << it->by << endl;
 
-        //cout << it->to << " is a final state ? " << it->isFinal << endl;
+        cout << it->to << " is a final state ? " << it->isFinal << endl;
         newAuto.nodes[it->to].finalState = it->isFinal;
     }
 
@@ -368,6 +396,7 @@ Automat readAutomat(){
     int initialState;
 
     fscanf(fin,"%d",&initialState);
+    automat.initialState = initialState;
 
     int finalStates;
 
