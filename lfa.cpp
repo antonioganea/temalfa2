@@ -324,6 +324,7 @@ Automat NFAtoDFA( Automat & automat ){
     std::vector<unsigned long long> q;
     cout << automat.initialState << endl;
     q.push_back(getSingleStateHash(automat.initialState));
+    allocator.allocateHash(getSingleStateHash(automat.initialState));
 
     StateNumberAllocator cleanAlloc;
     int maxStates = 0;
@@ -365,7 +366,7 @@ Automat NFAtoDFA( Automat & automat ){
 
 
             if ( composed != 0  ){
-                    cout << "entered" << endl;
+                    //cout << "entered" << endl;
 
                 if ( !allocator.isHashTaken(composed) ){
                     q.push_back(composed);
@@ -420,7 +421,10 @@ Automat NFAtoDFA( Automat & automat ){
     */
     for (std::vector<ModLink>::iterator it = modlinks.begin() ; it != modlinks.end(); ++it){
 
-        prettyPrintHash(it->from); cout << " goes into "; prettyPrintHash(it->to); cout << " by letter '" << it->by << "'" << endl;
+        int from = allocator.allocateHash(it->from);
+        int to = allocator.allocateHash(it->to);
+
+        prettyPrintHash(it->from); cout << "(" << from << ") goes into "; prettyPrintHash(it->to); cout << "(" << to << ") by letter '" << it->by << "'" << endl;
 
         //newAuto.nodes[it->from].m[it->by].push_back(it->to);
         //cout << it->from << " -> " << it->to << " by " << it->by << endl;
