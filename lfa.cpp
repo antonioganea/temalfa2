@@ -10,6 +10,8 @@
 #include <queue>
 using namespace std;
 
+#define DEBUG_PRINTS
+
 struct Node{
     std::map< char, std::vector<int> > m;
     bool finalState;
@@ -194,6 +196,18 @@ void printBits( unsigned long long val ){
     }
 }
 
+void prettyPrintHash( unsigned long long val ){
+    cout << "{ ";
+    for ( int i = 0; i < 32; i++ ){
+        unsigned long long mask = 1 << i;
+
+        if ( mask & val ){
+            cout << i << " ";
+        }
+    }
+    cout << "}";
+}
+
 
 struct StateNumberAllocator{
 private:
@@ -207,7 +221,7 @@ public:
 
     bool isHashTaken( unsigned long long h ){
         //cout << "Checking if " << h << " is taken" << endl;
-        if ( m[h] ){
+        if ( m.find(h) != m.end() ){
             //cout << "Yep" << endl;
             return true;
         }
@@ -219,7 +233,7 @@ public:
     }
 
     int allocateHash(unsigned long long hash) {
-        if ( m[hash] ){
+        if ( m.find(hash) != m.end() ){
             //cout << "Already there" << endl;
             return m[hash];
         } else {
@@ -259,6 +273,19 @@ bool checkIfHashContainsFinalState( Automat & automat, unsigned long long hash )
 
     return false;
 }
+
+struct ModLink{
+    unsigned long long from;
+    unsigned long long to;
+    char by;
+    bool isFinal;
+    ModLink( unsigned long long _from, unsigned long long _to, char _by, bool _isFinal){
+        from = _from;
+        to = _to;
+        by = _by;
+        isFinal = _isFinal;
+    }
+};
 
 Automat NFAtoDFA( Automat & automat ){
 
@@ -302,6 +329,7 @@ Automat NFAtoDFA( Automat & automat ){
     int maxStates = 0;
 
     std::vector<Link> links;
+    std::vector<ModLink> modlinks;
 
     while (!q.empty())
     {
@@ -314,20 +342,35 @@ Automat NFAtoDFA( Automat & automat ){
             unsigned long long mask;
             unsigned long long composed = 0;
 
+            #ifndef DEBUG_PRINTS
             cout << "Current hash "; printBits(currentHash); cout << " composes into :" << endl;
+            #endif // DEBUG_PRINTS
             for ( int i = 0; i < 32; i++ ){
                 mask = 1 << i;
 
                 if ( mask & currentHash ){
+                    #ifndef DEBUG_PRINTS
                     cout << "added " << i << " " << letters[C] << " "; printBits(matrix[i][C]); cout << endl;
+                    #endif // DEBUG_PRINTS
                     composed |= matrix[i][C];
                 }
             }
+            #ifndef DEBUG_PRINTS
+            cout << "composed : "; printBits(composed); cout << endl;
+            #endif // DEBUG_PRINTS
 
-            cout << "composed : "; printBits(composed); cout << endl << endl;
+            cout << ">> by letter '" << letters[C] << "' you can go from ";prettyPrintHash(currentHash);
+            cout << " to "; prettyPrintHash(composed); cout << endl << endl;
 
-            if ( composed != 0 && !allocator.isHashTaken(composed) ){
-                q.push_back(composed);
+
+
+            if ( composed != 0  ){
+                    cout << "entered" << endl;
+
+                if ( !allocator.isHashTaken(composed) ){
+                    q.push_back(composed);
+                }
+
                 int allocatedNumber = allocator.allocateHash(composed);
 
                 /*
@@ -352,6 +395,9 @@ Automat NFAtoDFA( Automat & automat ){
                 Link newLink(fromNode, toNode, currentChar, isFinalState);
                                                     //cout << "Pushed link " << fromNode << " " << toNode << " by " << currentChar << endl;
                 links.push_back(newLink);
+
+                ModLink newmodlink(currentHash,composed,currentChar,isFinalState);
+                modlinks.push_back(newmodlink);
             }
         }
     }
@@ -363,12 +409,24 @@ Automat NFAtoDFA( Automat & automat ){
 
     cout << "Constructing new automata with " << maxStates << " states" << endl;
 
+    /*
     for (std::vector<Link>::iterator it = links.begin() ; it != links.end(); ++it){
         newAuto.nodes[it->from].m[it->by].push_back(it->to);
-        cout << it->from << " -> " << it->to << " by " << it->by << endl;
+        //cout << it->from << " -> " << it->to << " by " << it->by << endl;
 
-        cout << it->to << " is a final state ? " << it->isFinal << endl;
+        //cout << it->to << " is a final state ? " << it->isFinal << endl;
         newAuto.nodes[it->to].finalState = it->isFinal;
+    }
+    */
+    for (std::vector<ModLink>::iterator it = modlinks.begin() ; it != modlinks.end(); ++it){
+
+        prettyPrintHash(it->from); cout << " goes into "; prettyPrintHash(it->to); cout << " by letter '" << it->by << "'" << endl;
+
+        //newAuto.nodes[it->from].m[it->by].push_back(it->to);
+        //cout << it->from << " -> " << it->to << " by " << it->by << endl;
+
+        //cout << it->to << " is a final state ? " << it->isFinal << endl;
+        //newAuto.nodes[it->to].finalState = it->isFinal;
     }
 
     return newAuto;
