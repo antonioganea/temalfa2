@@ -426,11 +426,11 @@ Automat NFAtoDFA( Automat & automat ){
 
         prettyPrintHash(it->from); cout << "(" << from << ") goes into "; prettyPrintHash(it->to); cout << "(" << to << ") by letter '" << it->by << "'" << endl;
 
-        //newAuto.nodes[it->from].m[it->by].push_back(it->to);
+        newAuto.nodes[from].m[it->by].push_back(to);
         //cout << it->from << " -> " << it->to << " by " << it->by << endl;
 
         //cout << it->to << " is a final state ? " << it->isFinal << endl;
-        //newAuto.nodes[it->to].finalState = it->isFinal;
+        newAuto.nodes[it->to].finalState = it->isFinal;
     }
 
     return newAuto;
